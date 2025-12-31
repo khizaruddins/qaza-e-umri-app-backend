@@ -2,6 +2,8 @@ import {
   Injectable,
   UnauthorizedException,
   ConflictException,
+  Logger,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -12,6 +14,8 @@ import { User } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private databaseService: DatabaseService,
     private jwtService: JwtService,
@@ -44,23 +48,43 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto) {
-    const { email, password } = loginDto;
+    try {
+      const { email, password } = loginDto;
+      this.logger.log(`Attempting login for user: ${email}`);
 
-    const user = await this.databaseService.user.findUnique({
-      where: { email },
-    });
+      const user = await this.databaseService.user.findUnique({
+        where: { email },
+      });
 
-    if (!user || !user.password) {
-      throw new UnauthorizedException('Invalid credentials');
+      if (!user) {
+        this.logger.warn(`User not found: ${email}`);
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      if (!user.password) {
+        this.logger.warn(`User has no password set: ${email}`);
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+
+      if (!isPasswordValid) {
+        this.logger.warn(`Invalid password for user: ${email}`);
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      this.logger.log(`Login successful for user: ${email}`);
+      return this.generateTokens(user);
+    } catch (error) {
+      this.logger.error(
+        `Login failed for user: ${loginDto.email}`,
+        error.stack,
+      );
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Login failed');
     }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    return this.generateTokens(user);
   }
 
   async refresh(refreshToken: string) {
