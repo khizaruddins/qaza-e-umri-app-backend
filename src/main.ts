@@ -28,10 +28,11 @@ async function bootstrap() {
   app.setGlobalPrefix('api'); // Set the global prefix for all routes
 
   const deployedUrl = configService.get<string>('DEPLOYED_URL');
-  const origins = ['http://localhost:3000'];
-  if (deployedUrl) {
-    origins.push(deployedUrl);
-  }
+  const origins = [
+    'http://localhost:3000',
+    'https://qaza-e-umri-kuqd09a3x-syed-khizaruddins-projects.vercel.app/',
+    'https://qaza-e-umri-app.vercel.app',
+  ];
 
   app.enableCors({
     origin: origins,
