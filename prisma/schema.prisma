@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  email    String  @unique
+  password String // Hashed
+  name     String
+  phone    String?
+  address  String?
+  gender   Gender
+
+  // Subscription & Payment
+  isPremium       Boolean   @default(false)
+  trialStartDate  DateTime?
+  paymentDate     DateTime?
+  nextPaymentDate DateTime?
+
+  // App Settings
+  qazaGoalYears    Int          @default(0)
+  trackingMode     TrackingMode @default(CHECKLIST)
+  initialTotalDebt Int          @default(0)
+
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  paymentStatus        String? // e.g., "active", "past_due", etc.
+  paymentTransactionId String? // Store transaction ID from payment gateway
+
+  // Relations
+  prayerDebt    PrayerDebt?
+  dailyLogs     DailyLog[]
+  subscriptions Subscription[]
+  notifications Notification[]
+}
+
+// Stores the current running total of missed prayers
+model PrayerDebt {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @unique @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+
+  // Counts of pending prayers
+  fajr    Int @default(0)
+  dhuhr   Int @default(0)
+  asr     Int @default(0)
+  maghrib Int @default(0)
+  isha    Int @default(0)
+  witr    Int @default(0)
+
+  updatedAt DateTime @updatedAt
+}
+
+// Tracks daily activity (both 'Ada' and 'Qaza' performed)
+model DailyLog {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+
+  date String // Format: "YYYY-MM-DD" for easy querying
+
+  // Ada: Prayers performed on time today
+  adaFajr    Boolean @default(false)
+  adaDhuhr   Boolean @default(false)
+  adaAsr     Boolean @default(false)
+  adaMaghrib Boolean @default(false)
+  adaIsha    Boolean @default(false)
+  adaWitr    Boolean @default(false)
+
+  // Qaza: Missed prayers made up today
+  qazaFajr    Boolean @default(false)
+  qazaDhuhr   Boolean @default(false)
+  qazaAsr     Boolean @default(false)
+  qazaMaghrib Boolean @default(false)
+  qazaIsha    Boolean @default(false)
+  qazaWitr    Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date])
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum TrackingMode {
+  CHECKLIST
+  CALCULATOR
+}
+
+model Subscription {
+  id            String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String        @db.ObjectId
+  user          User          @relation(fields: [userId], references: [id])
+  amount        Float
+  currency      String        @default("INR")
+  status        PaymentStatus @default(PENDING)
+  transactionId String?
+  gateway       String        @default("QR_CODE") // e.g. Stripe, PayPal,Phonepe
+  startDate     DateTime
+  endDate       DateTime
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Notification {
+  id        String           @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String           @db.ObjectId
+  user      User             @relation(fields: [userId], references: [id])
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  type      NotificationType // INFO, WARNING, SUCCESS
+  createdAt DateTime         @default(now())
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum NotificationType {
+  INFO
+  WARNING
+  SUCCESS
+  ERROR
+}
