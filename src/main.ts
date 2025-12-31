@@ -12,6 +12,7 @@ import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { logger: false });
+  const configService = app.get(ConfigService);
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -25,8 +26,15 @@ async function bootstrap() {
   app.use(json({ limit: '50mb' }));
   app.use(urlencoded({ extended: true, limit: '50mb' }));
   app.setGlobalPrefix('api'); // Set the global prefix for all routes
+
+  const deployedUrl = configService.get<string>('DEPLOYED_URL');
+  const origins = ['http://localhost:3000'];
+  if (deployedUrl) {
+    origins.push(deployedUrl);
+  }
+
   app.enableCors({
-    origin: 'http://localhost:3000',
+    origin: origins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
@@ -34,7 +42,6 @@ async function bootstrap() {
 
   const logger = app.get(Logger);
 
-  const configService: ConfigService = app.get(ConfigService);
   const swaggerUsername =
     typeof configService.get === 'function'
       ? configService.get<string>('SWAGGER_USERNAME')
@@ -78,7 +85,9 @@ async function bootstrap() {
   const port = 3200;
   await app.listen(port);
 
-  console.log(`Server running on: http://localhost:${port}`);
-  console.log(`Swagger docs available at: http://localhost:${port}/api/docs`);
+  const displayUrl = deployedUrl || `http://localhost:${port}`;
+
+  console.log(`Server running on: ${displayUrl}`);
+  console.log(`Swagger docs available at: ${displayUrl}/api/docs`);
 }
 bootstrap();

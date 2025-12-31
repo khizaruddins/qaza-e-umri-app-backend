@@ -18,6 +18,7 @@ import {
 import { AuthService } from '../services/auth.service';
 import { SignupDto } from '../dtos/signup.dto';
 import { LoginDto } from '../dtos/login.dto';
+import { ResetPasswordDto } from '../dtos/reset-password.dto';
 import { Public } from '../../../common/decorators/public.decorator';
 
 @ApiTags('Auth')
@@ -51,6 +52,14 @@ export class AuthController {
     this.setCookies(res, accessToken, refreshToken);
 
     return { user };
+  }
+
+  @Public()
+  @Post('reset-password')
+  @ApiOperation({ summary: 'Reset password (Public)' })
+  @ApiResponse({ status: 200, description: 'Password reset successfully' })
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    return this.authService.resetPassword(resetPasswordDto);
   }
 
   @Public()

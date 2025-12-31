@@ -4,12 +4,14 @@ import {
   ConflictException,
   Logger,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { DatabaseService } from '../../database/services/database.service';
 import { SignupDto } from '../dtos/signup.dto';
 import { LoginDto } from '../dtos/login.dto';
+import { ResetPasswordDto } from '../dtos/reset-password.dto';
 import { User } from '@prisma/client';
 
 @Injectable()
@@ -45,6 +47,27 @@ export class AuthService {
     });
 
     return this.generateTokens(user);
+  }
+
+  async resetPassword(resetPasswordDto: ResetPasswordDto) {
+    const { email, newPassword } = resetPasswordDto;
+
+    const user = await this.databaseService.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await this.databaseService.user.update({
+      where: { email },
+      data: { password: hashedPassword },
+    });
+
+    return { message: 'Password reset successfully' };
   }
 
   async login(loginDto: LoginDto) {
