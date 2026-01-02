@@ -18,6 +18,14 @@ export class PaymentService {
   ) {}
 
   async createSubscription(userId: string, dto: CreateSubscriptionDto) {
+    const subscription =
+      await this.paymentRepository.findLatestSubscriptionByUserIdPending(
+        userId,
+      );
+
+    if (subscription) {
+      return subscription;
+    }
     const startDate = new Date();
     const endDate = new Date();
     endDate.setDate(endDate.getDate() + 30); // 30 days subscription

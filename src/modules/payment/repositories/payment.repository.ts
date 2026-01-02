@@ -47,6 +47,15 @@ export class PaymentRepository {
     });
   }
 
+  async findLatestSubscriptionByUserIdPending(
+    userId: string,
+  ): Promise<Subscription | null> {
+    return this.prisma.subscription.findFirst({
+      where: { userId, status: PaymentStatus.PENDING },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async updateUserPremiumStatus(
     userId: string,
     isPremium: boolean,
