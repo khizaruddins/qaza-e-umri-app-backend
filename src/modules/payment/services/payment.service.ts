@@ -51,7 +51,7 @@ export class PaymentService {
     );
   }
 
-  async approvePayment(userId: string, dto: ApprovePaymentDto) {
+  async approvePayment(dto: ApprovePaymentDto) {
     const subscription = await this.paymentRepository.findSubscriptionById(
       dto.subscriptionId,
     );
@@ -62,6 +62,10 @@ export class PaymentService {
 
     if (subscription.status === PaymentStatus.COMPLETED) {
       throw new BadRequestException('Subscription already active');
+    }
+
+    if (subscription.transactionId !== dto.transactionId) {
+      throw new BadRequestException('Transaction ID mismatched');
     }
 
     const startDate = new Date();
@@ -80,7 +84,7 @@ export class PaymentService {
 
     // Update user premium status
     await this.paymentRepository.updateUserPremiumStatus(
-      userId,
+      subscription.userId,
       true,
       startDate, // paymentDate
       endDate, // nextPaymentDate
@@ -88,7 +92,7 @@ export class PaymentService {
 
     // Send success notification
     await this.notificationService.createNotification(
-      userId,
+      subscription.userId,
       'Subscription Activated',
       'Your payment has been approved. You are now a Premium user!',
       NotificationType.SUCCESS,
