@@ -56,12 +56,6 @@ export class PaymentService {
       dto.subscriptionId,
     );
 
-    const userSubscription =
-      await this.paymentRepository.findLatestSubscriptionByUserId(userId);
-
-    if (userSubscription?.transactionId !== subscription?.transactionId) {
-      throw new BadRequestException('Transaction ID mismatched');
-    }
     if (!subscription) {
       throw new NotFoundException('Subscription not found');
     }
