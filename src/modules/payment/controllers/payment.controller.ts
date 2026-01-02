@@ -86,7 +86,7 @@ export class PaymentController {
       },
     },
   })
-  async approvePayment(@Req() req, @Body() dto: ApprovePaymentDto) {
-    return this.paymentService.approvePayment(req.user.id, dto);
+  async approvePayment(dto: ApprovePaymentDto) {
+    return this.paymentService.approvePayment(dto);
   }
 }
