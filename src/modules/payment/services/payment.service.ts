@@ -60,10 +60,6 @@ export class PaymentService {
       throw new NotFoundException('Subscription not found');
     }
 
-    if (subscription.userId !== userId) {
-      throw new BadRequestException('Invalid subscription for user');
-    }
-
     if (subscription.status === PaymentStatus.COMPLETED) {
       throw new BadRequestException('Subscription already active');
     }
