@@ -13,8 +13,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
+        ExtractJwt.fromAuthHeaderAsBearerToken(), // For Swagger/API clients
         (request: Request) => {
-          return request?.cookies?.access_token;
+          return request?.cookies?.access_token; // For browser cookies
         },
       ]),
       ignoreExpiration: false,

@@ -87,7 +87,7 @@ export class AuthController {
 
     this.setCookies(res, accessToken, refreshToken);
 
-    return { user };
+    return { user, accessToken };
   }
 
   @Public()
@@ -157,7 +157,11 @@ export class AuthController {
     },
   })
   async getProfile(@Request() req) {
-    return req.user;
+    const res = {
+      ...req.user,
+    };
+    delete res.password;
+    return res;
   }
 
   private setCookies(res: Response, accessToken: string, refreshToken: string) {
