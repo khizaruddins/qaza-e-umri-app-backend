@@ -14,5 +14,8 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY package*.json ./
 
+ENV NODE_ENV=production
+ENV PORT=8080
+
 EXPOSE 8080
 CMD ["node", "dist/main"]
