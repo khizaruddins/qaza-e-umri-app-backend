@@ -57,21 +57,22 @@ async function bootstrap() {
       'SWAGGER_PASSWORD is not set in the environment variables. Please set it to secure the Swagger documentation.',
     );
   }
-
-  app.use(
-    ['/api/docs', '/api/docs-json'],
-    basicAuth({
-      challenge: true,
-      users: { [String(swaggerUsername)]: swaggerPassword as string },
-      unauthorizedResponse: (req: express.Request) => ({
-        statusCode: 401,
-        message: 'Unauthorized access to API documentation',
-        error: 'Unauthorized',
-        timestamp: new Date().toISOString(),
-        path: req.url,
+  if (swaggerUsername && swaggerPassword) {
+    app.use(
+      ['/api/docs', '/api/docs-json'],
+      basicAuth({
+        challenge: true,
+        users: { [String(swaggerUsername)]: swaggerPassword },
+        unauthorizedResponse: (req: express.Request) => ({
+          statusCode: 401,
+          message: 'Unauthorized access to API documentation',
+          error: 'Unauthorized',
+          timestamp: new Date().toISOString(),
+          path: req.url,
+        }),
       }),
-    }),
-  );
+    );
+  }
 
   const config = new DocumentBuilder()
     .setTitle('Qaza-e-Umri API')
