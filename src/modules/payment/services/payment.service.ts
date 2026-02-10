@@ -13,15 +13,17 @@ import { CreatePlanSubscriptionDto } from '../dtos/create-plan-subscription.dto'
 import { VerifySubscriptionDto } from '../dtos/verify-subscription.dto';
 import { CreateTipDto } from '../dtos/create-tip.dto';
 import { VerifyTipDto } from '../dtos/verify-tip.dto';
+import Razorpay from 'razorpay';
 import {
   PaymentStatus,
   NotificationType,
   PlanType,
   Currency,
 } from '@prisma/client';
+
 import { NotificationService } from '../../notification/services/notification.service';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const Razorpay = require('razorpay');
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-assignment
+// const Razorpay = require('razorpay');
 import * as crypto from 'crypto';
 
 @Injectable()
