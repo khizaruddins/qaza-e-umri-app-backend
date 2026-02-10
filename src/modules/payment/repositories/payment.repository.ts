@@ -38,6 +38,48 @@ export class PaymentRepository {
     });
   }
 
+  async updateSubscriptionRazpayDetails(
+    id: string,
+    razorpaySubscriptionId: string,
+    status: PaymentStatus,
+  ) {
+    return this.prisma.subscription.update({
+      where: { id },
+      data: {
+        razorpaySubscriptionId,
+        status,
+      },
+    });
+  }
+
+  async createTip(data: Prisma.TipCreateInput) {
+    return this.prisma.tip.create({ data });
+  }
+
+  async updateTipStatus(
+    id: string,
+    status: PaymentStatus,
+    razorpayPaymentId?: string,
+    razorpaySignature?: string,
+  ) {
+    return this.prisma.tip.update({
+      where: { id },
+      data: {
+        status,
+        ...(razorpayPaymentId && { razorpayPaymentId }),
+        ...(razorpaySignature && { razorpaySignature }),
+      },
+    });
+  }
+
+  async findTipById(id: string) {
+    return this.prisma.tip.findUnique({ where: { id } });
+  }
+
+  async findTipByOrderId(orderId: string) {
+    return this.prisma.tip.findFirst({ where: { razorpayOrderId: orderId } });
+  }
+
   async findLatestSubscriptionByUserId(
     userId: string,
   ): Promise<Subscription | null> {

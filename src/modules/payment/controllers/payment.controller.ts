@@ -3,6 +3,11 @@ import { PaymentService } from '../services/payment.service';
 import { CreateSubscriptionDto } from '../dtos/create-subscription.dto';
 import { ApprovePaymentDto } from '../dtos/approve-payment.dto';
 import { SubmitProofDto } from '../dtos/submit-proof.dto';
+import { CreatePlanSubscriptionDto } from '../dtos/create-plan-subscription.dto';
+import { VerifySubscriptionDto } from '../dtos/verify-subscription.dto';
+import { CreateTipDto } from '../dtos/create-tip.dto';
+import { VerifyTipDto } from '../dtos/verify-tip.dto';
+
 import {
   ApiTags,
   ApiOperation,
@@ -17,7 +22,7 @@ export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
   @Post('subscription')
-  @ApiOperation({ summary: 'Create a new subscription' })
+  @ApiOperation({ summary: 'Create a new subscription (Legacy/Manual)' })
   @ApiResponse({
     status: 201,
     description: 'Subscription created successfully',
@@ -86,7 +91,39 @@ export class PaymentController {
       },
     },
   })
-  async approvePayment(dto: ApprovePaymentDto) {
+  async approvePayment(@Body() dto: ApprovePaymentDto) {
     return this.paymentService.approvePayment(dto);
+  }
+
+  // --- Razorpay Endpoints ---
+
+  @Post('razorpay/subscription')
+  @ApiOperation({ summary: 'Create a Razorpay Plan Subscription' })
+  async createPlanSubscription(
+    @Req() req,
+    @Body() dto: CreatePlanSubscriptionDto,
+  ) {
+    return this.paymentService.createPlanSubscription(req.user.id, dto);
+  }
+
+  @Post('razorpay/subscription/verify')
+  @ApiOperation({ summary: 'Verify Razorpay Subscription Signature' })
+  async verifySubscription(@Req() req, @Body() dto: VerifySubscriptionDto) {
+    return this.paymentService.verifySubscription(req.user.id, dto);
+  }
+
+  @Post('razorpay/tip')
+  @ApiOperation({ summary: 'Create a Tip Order' })
+  async createTip(@Req() req, @Body() dto: CreateTipDto) {
+    // If auth is optional, req.user might be undefined.
+    // However, @ApiBearerAuth() suggests it's protected globally or here.
+    return this.paymentService.createTip(req.user?.id, dto);
+  }
+
+  @Post('razorpay/tip/verify')
+  @ApiOperation({ summary: 'Verify Tip Payment' })
+  async verifyTip(@Body() dto: VerifyTipDto) {
+    // Verification doesn't strictly need user context if signature matches
+    return this.paymentService.verifyTip(dto);
   }
 }
