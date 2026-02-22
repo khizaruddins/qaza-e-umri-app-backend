@@ -9,8 +9,6 @@ import * as express from 'express';
 import { Logger } from 'nestjs-pino';
 import cookieParser from 'cookie-parser';
 import { ValidationPipe } from '@nestjs/common';
-import * as crypto from 'crypto';
-(global as Record<string, any>)['crypto'] = crypto;
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { logger: false });
