@@ -17,10 +17,12 @@ model User {
   gender   Gender
 
   // Subscription & Payment
-  isPremium       Boolean   @default(false)
-  trialStartDate  DateTime?
-  paymentDate     DateTime?
-  nextPaymentDate DateTime?
+  isPremium          Boolean   @default(false)
+  plan               PlanType  @default(TRIAL)
+  razorpayCustomerId String?
+  trialStartDate     DateTime?
+  paymentDate        DateTime?
+  nextPaymentDate    DateTime?
 
   // App Settings
   qazaGoalYears    Int          @default(0)
@@ -36,6 +38,7 @@ model User {
   prayerDebt    PrayerDebt?
   dailyLogs     DailyLog[]
   subscriptions Subscription[]
+  tips          Tip[]
   notifications Notification[]
 }
 
@@ -96,19 +99,56 @@ enum TrackingMode {
   CALCULATOR
 }
 
+enum PlanType {
+  TRIAL
+  MONTHLY
+  YEARLY
+}
+
+enum Currency {
+  INR
+  USD
+}
+
 model Subscription {
-  id            String        @id @default(auto()) @map("_id") @db.ObjectId
-  userId        String        @db.ObjectId
-  user          User          @relation(fields: [userId], references: [id])
-  amount        Float
-  currency      String        @default("INR")
-  status        PaymentStatus @default(PENDING)
-  transactionId String?
-  gateway       String        @default("QR_CODE") // e.g. Stripe, PayPal,Phonepe
-  startDate     DateTime
-  endDate       DateTime
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+
+  planType PlanType @default(MONTHLY)
+
+  amount   Float
+  currency Currency      @default(INR)
+  status   PaymentStatus @default(PENDING)
+
+  // Razorpay fields
+  razorpaySubscriptionId String?
+  razorpayPaymentId      String?
+  transactionId          String? // Keep for backward compatibility or generic use
+
+  gateway   String   @default("QR_CODE") // e.g. Stripe, PayPal, Phonepe, Razorpay
+  startDate DateTime
+  endDate   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Tip {
+  id     String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId String? @db.ObjectId
+  user   User?   @relation(fields: [userId], references: [id])
+
+  amount   Float
+  currency Currency @default(INR)
+  message  String?
+
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  razorpaySignature String?
+  status            PaymentStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Notification {
